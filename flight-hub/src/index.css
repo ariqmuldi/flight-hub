@@ -2,6 +2,10 @@
   margin-right: 10px; /* Adjust the value as needed */
 }
 
+body {
+  background-color: #7FA1C3;
+}
+
 .navbar {
   background-color: #6482AD;
 }
@@ -12,4 +16,19 @@
 
 .navbar-items {
   color : #E2DAD6;
+}
+
+.main-container {
+  text-align: center;
+  background-color: #7FA1C3;
+}
+
+.main-container > h1 {
+  color : #F5EDED 
+}
+
+.buttonEmailForm {
+  background-color: #6482AD;
+  border-color: #6482AD;
+  outline-color: #6482AD;
 }
