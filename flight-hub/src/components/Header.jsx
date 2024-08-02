@@ -12,8 +12,11 @@ function Header() {
               <PlaneIcon className="plane-icon" />
               <Navbar.Brand className="navbar-brand" href="#home">Flight Hub</Navbar.Brand>
               <Nav className="ms-auto">
+                <Nav.Link className="navbar-items" href="#home">Home</Nav.Link>
                 <Nav.Link className="navbar-items" href="#home">Offers</Nav.Link>
                 <Nav.Link className="navbar-items" href="#features">Blog</Nav.Link>
+                <Nav.Link className="navbar-items" href="#features">Register</Nav.Link>
+                <Nav.Link className="navbar-items" href="#features">Log In</Nav.Link>
               </Nav>
             </Container>
           </Navbar>
