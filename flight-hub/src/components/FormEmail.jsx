@@ -13,19 +13,22 @@ function FormEmail() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log("Form was submitted, now the modal can be closed");
+        console.log("Form was submitted");
         console.log(email)
 
         try {
-            const response = await axios.post('http://127.0.0.1:5000/submit-email', {
+            // Make a POST request to the Flask backend with the email data
+            const response = await axios.post('http://127.0.0.1:5000/submit-email', 
+                {
                 email: email
-            }, {
+                }, 
+                {
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json', // Set the content type to JSON
                 }
             });
 
-            console.log(response.data.message); // Should be "Email received"
+            console.log(response.data.message); // Log the response message from the backend. Should be "Email Recieved"
         } catch (error) {
             console.error('Error:', error);
         }
