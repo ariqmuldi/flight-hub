@@ -5,6 +5,7 @@ import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import { useState } from 'react';
+import axios from 'axios';
 
 
 function FormEmail() {
@@ -14,6 +15,20 @@ function FormEmail() {
         e.preventDefault();
         console.log("Form was submitted, now the modal can be closed");
         console.log(email)
+
+        try {
+            const response = await axios.post('http://127.0.0.1:5000/submit-email', {
+                email: email
+            }, {
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            console.log(response.data.message); // Should be "Email received"
+        } catch (error) {
+            console.error('Error:', error);
+        }
 
     }
 
