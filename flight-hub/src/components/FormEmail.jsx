@@ -4,8 +4,23 @@ import Form from 'react-bootstrap/Form';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
+import { useState } from 'react';
+
 
 function FormEmail() {
+    const [email, setEmail] = useState('');   
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        console.log("Form was submitted, now the modal can be closed");
+        console.log(email)
+
+    }
+
+    function handleChange(e) {
+        setEmail(e.target.value)
+    }
+
     return (
         
         <Container className="d-flex flex-column justify-content-around align-items-center">
@@ -16,11 +31,11 @@ function FormEmail() {
             </Container>
             </Row>
             <Row>
-            <Form>
+            <Form onSubmit={handleSubmit} action="POST">
                 <Form.Group className="" controlId="formBasicEmail">
 
                     <Container>
-                        <Form.Control type="email" placeholder="Enter your email to join!" />
+                        <Form.Control type="email" name = "submitEmail" value={email} onChange={handleChange} placeholder="Enter your email to join!" />
                     </Container>
                 
                     <Container className="mt-2 mb-2 mx-auto text-muted text-center" >
