@@ -2,8 +2,17 @@
   margin-right: 10px; /* Adjust the value as needed */
 }
 
+html {
+  height : 100%
+  
+}
+
 body {
   background-color: #7FA1C3;
+  position: relative;
+  margin : 0;
+  min-height: 100%;
+  padding-bottom: 6.74rem;
 }
 
 .navbar {
@@ -31,4 +40,12 @@ body {
   background-color: #6482AD;
   border-color: #6482AD;
   outline-color: #6482AD;
+}
+
+.footer-div {
+  position: absolute;
+  right : 0;
+  left: 0;
+  bottom: 0;
+  width: 100%;
 }
