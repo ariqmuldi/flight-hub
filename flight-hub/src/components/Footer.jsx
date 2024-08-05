@@ -15,8 +15,8 @@ function Footer() {
     }, []);
 
     return (
-        <>
-          <Navbar className="navbar mt-5">
+      
+          <Navbar className="footer-div navbar mt-5">
             <Container>
               <PlaneIcon className="plane-icon" />
               <Nav className="ms-auto">
@@ -25,7 +25,7 @@ function Footer() {
               </Nav>
             </Container>
           </Navbar>
-        </>
+      
     )
 }
 
