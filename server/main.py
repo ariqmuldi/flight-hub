@@ -1,9 +1,21 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import requests
+from flask_login import UserMixin, login_user, LoginManager, current_user, logout_user
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import relationship, DeclarativeBase, Mapped, mapped_column
+from sqlalchemy import Integer, String, Text
 
 app = Flask(__name__)
 cors = CORS(app, origins="*")
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+
+class Base(DeclarativeBase):
+    pass
+app.config['SQLALCHEMY_DATABASE_URI'] = None
+db = SQLAlchemy(model_class=Base)
+db.init_app(app)
 
 @app.route('/api/users', methods=["GET"])
 def users():
