@@ -5,9 +5,13 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship, DeclarativeBase, Mapped, mapped_column
 from sqlalchemy import Integer, String, Text
 from werkzeug.security import generate_password_hash, check_password_hash
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = '8BYkEfBA6O6donzWlSihBXox7C0sKR6b' # Session managment
+app.config['SECRET_KEY'] = os.getenv("FLASK_SECRET_KEY") # Session managment
 cors = CORS(app, origins="*", supports_credentials=True)
 
 login_manager = LoginManager()
@@ -15,7 +19,7 @@ login_manager.init_app(app)
 
 class Base(DeclarativeBase):
     pass
-app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///users.db"
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
 db = SQLAlchemy(model_class=Base)
 db.init_app(app)
 
