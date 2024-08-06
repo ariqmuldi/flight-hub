@@ -21,12 +21,6 @@ function UserForm(props) {
 
     const saltRounds = 8;
 
-    // useEffect(() => {
-    //     if (user) {
-    //         navigate('/'); // Redirect to home if user is already logged in
-    //     }
-    // }, [user, navigate]);
-
     useEffect(() => {
         // Reset input fields and other state when formType changes
         setEmail('');
@@ -59,7 +53,8 @@ function UserForm(props) {
                 response = await login(email, password); // Use login from context
             }
 
-            console.log(response)
+            // console.log(response)
+            // console.log(response.user)
             setMessage(response.message);
             setMessageType(response.success ? 'success' : 'error');
 
@@ -69,37 +64,6 @@ function UserForm(props) {
            
         }
 
-        // try {
-        //     // Make a POST request to the Flask backend with email and password data
-        //     const response = await axios.post('http://127.0.0.1:5000/register', 
-        //         {
-        //         name : name, 
-        //         email: email,
-        //         password : password,
-        //         }, 
-        //         {
-        //         headers: {
-        //             'Content-Type': 'application/json', // Set the content type to JSON
-        //         }
-        //     });
-
-        //     console.log(response.data); // Log the response message from the backend. Should be "Email Recieved"
-        //     setMessage(response.data.message);
-        //     setRedirectLogin(response.data.redirectLogin);
-
-        //     console.log(response.data.redirectLogin)
-
-        //     if (response.data.redirectLogin) {
-        //         setTimeout(() => {
-        //             navigate('/login'); // Redirect to login page
-        //             setMessage(''); // Clear message
-        //             setRedirectLogin(false); // Reset redirectLogin
-        //         }, 2500); // Optional delay for user to see the message
-        //     }
-
-        // } catch (error) {
-        //     console.error('Error:', error);
-        // }
     }
 
     function handleEmailChange(e) {
