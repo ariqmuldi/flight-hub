@@ -1,13 +1,14 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from flask_login import UserMixin, login_user, LoginManager, current_user, logout_user
+from flask_login import UserMixin, login_user, LoginManager, current_user, logout_user, login_required
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship, DeclarativeBase, Mapped, mapped_column
 from sqlalchemy import Integer, String, Text
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-cors = CORS(app, origins="*")
+app.config['SECRET_KEY'] = '8BYkEfBA6O6donzWlSihBXox7C0sKR6b' # Session managment
+cors = CORS(app, origins="*", supports_credentials=True)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -55,6 +56,10 @@ class Comment(db.Model):
 with app.app_context():
     db.create_all()
 
+@login_manager.user_loader
+def load_user(user_id):
+    return db.get_or_404(User, user_id)
+
 @app.route('/api/users', methods=["GET"])
 def users():
     return { 
@@ -84,20 +89,52 @@ def register():
     password = data.get('password')
     password_hashed = generate_password_hash(password, method='pbkdf2:sha256', salt_length=8)
 
-    print(f"Received email: {name}") # Outputs the name to the console    
+    print(f"Received name: {name}") # Outputs the name to the console    
     print(f"Received email: {email}") # Outputs the email to the console 
-    print(f"Received email: {password_hashed}") # Outputs the password to the console 
+    print(f"Received password: {password_hashed}") # Outputs the password to the console 
 
     result = db.session.execute(db.select(User).where(User.email == email))
     user = result.scalar()
     if user:
-        return jsonify({"message": "User already exists. Log in instead! Redirecting...", "redirectLogin" : True})
+        return jsonify({"message": "User already exists. Log in instead! Redirecting...", 
+                        "redirectLogin" : True, "isLogin" : False, "success" : False})
 
     new_user = User(email=email, name=name, password=password_hashed)
     db.session.add(new_user)
     db.session.commit()
 
-    return jsonify({"message": "Succesful!", "redirectLogin" : False}), 200
+    login_user(new_user)
+    return jsonify({"message": "Succesful!", "redirectLogin" : False, "isLogin" : False, "success" : True}), 200
+
+@app.route('/login', methods=["POST"])
+def login():
+    data = request.get_json()
+
+    email = data.get('email')
+    password = data.get('password')
+
+    print(f"Received email: {email}") # Outputs the email to the console 
+    print(f"Received email: {password}") # Outputs the password to the console
+
+    result = db.session.execute(db.select(User).where(User.email == email))
+    user = result.scalar()
+
+    if not user:
+        return jsonify({"message": "That email does not exist, please try again.", "isLogin" : True, "success" : False})
+    elif not check_password_hash(user.password, password):
+        return jsonify({"message": "Password incorrect, please try again.", "isLogin" : True, "success" : False})
+    else:
+        login_user(user)
+        return jsonify({"message": "Login user (to-do)", "isLogin" : True, "success" : True})
+    
+@app.route('/logout', methods=["POST"])
+def logout():
+    logout_user()
+    return jsonify({"message": "Logged out successfully", "success": True})
+
+@app.route('/current_user', methods=["GET"])
+def get_currect_user():
+    return jsonify({"email": current_user.email, "name": current_user.name})
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
