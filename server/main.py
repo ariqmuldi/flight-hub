@@ -96,7 +96,7 @@ def register():
     result = db.session.execute(db.select(User).where(User.email == email))
     user = result.scalar()
     if user:
-        return jsonify({"message": "User already exists. Log in instead! Redirecting...", 
+        return jsonify({"user" : None, "message": "User already exists. Log in instead! Redirecting...", 
                         "redirectLogin" : True, "isLogin" : False, "success" : False})
 
     new_user = User(email=email, name=name, password=password_hashed)
@@ -104,7 +104,8 @@ def register():
     db.session.commit()
 
     login_user(new_user)
-    return jsonify({"message": "Succesful!", "redirectLogin" : False, "isLogin" : False, "success" : True}), 200
+    return jsonify({"user" : {"email": current_user.email, "name": current_user.name}, 
+                    "message": "Succesful!", "redirectLogin" : False, "isLogin" : False, "success" : True}), 200
 
 @app.route('/login', methods=["POST"])
 def login():
@@ -120,21 +121,26 @@ def login():
     user = result.scalar()
 
     if not user:
-        return jsonify({"message": "That email does not exist, please try again.", "isLogin" : True, "success" : False})
+        return jsonify({"user" : None, "message": "That email does not exist, please try again.", "isLogin" : True, "success" : False})
     elif not check_password_hash(user.password, password):
-        return jsonify({"message": "Password incorrect, please try again.", "isLogin" : True, "success" : False})
+        return jsonify({"user" : None, "message": "Password incorrect, please try again.", "isLogin" : True, "success" : False})
     else:
         login_user(user)
-        return jsonify({"message": "Login user (to-do)", "isLogin" : True, "success" : True})
+        return jsonify({"user" : { "email": current_user.email, "name": current_user.name}, 
+                        "message": "Success!", "isLogin" : True, "success" : True})
     
 @app.route('/logout', methods=["POST"])
 def logout():
     logout_user()
-    return jsonify({"message": "Logged out successfully", "success": True})
+    return jsonify({"user" : None, "message": "Logged out successfully", "success": True})
 
 @app.route('/current_user', methods=["GET"])
-def get_currect_user():
-    return jsonify({"email": current_user.email, "name": current_user.name})
+def get_current_user():
+    # Ensure the user is logged in before accessing current_user
+    if current_user.is_authenticated:
+        return jsonify({"email": current_user.email, "name": current_user.name})
+    else:
+        return jsonify({"message": "User not authenticated"}), 401
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
