@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext'; // Adjust the path to where your AuthContext is located
 import axios from 'axios'
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Header from './components/Header.jsx'
@@ -11,7 +12,9 @@ import UserForm from './components/UserForm.jsx';
 
 function App() {
   return (
-    <div app="app-container">
+    <AuthProvider>
+
+    
       <Router>
         <Routes>
 
@@ -50,7 +53,9 @@ function App() {
         </Routes>
       </Router>
       
-    </div>
+      
+  
+    </AuthProvider>
     
    
   )
