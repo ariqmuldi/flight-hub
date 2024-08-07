@@ -1,3 +1,5 @@
+import os
+import requests
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_login import UserMixin, login_user, LoginManager, current_user, logout_user, login_required
@@ -5,14 +7,19 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship, DeclarativeBase, Mapped, mapped_column
 from sqlalchemy import Integer, String, Text
 from werkzeug.security import generate_password_hash, check_password_hash
-import os
 from dotenv import load_dotenv
+TOKEN_ENDPOINT = "https://test.api.amadeus.com/v1/security/oauth2/token"
+API_ENDPOINT = "https://test.api.amadeus.com/v1/reference-data/locations/cities"
+FLIGHT_OFFERS_ENDPOINT = "https://test.api.amadeus.com/v2/shopping/flight-offers"
 
 load_dotenv()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv("FLASK_SECRET_KEY") # Session managment
 cors = CORS(app, origins="*", supports_credentials=True)
+
+AMADEUS_API_KEY = os.getenv("AMADEUS_API_KEY")
+AMADEUS_API_SECRET = os.getenv("AMADEUS_API_SECRET")
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -60,6 +67,19 @@ class Comment(db.Model):
 with app.app_context():
     db.create_all()
 
+def get_amadeus_token():
+    header = {
+            'Content-Type': 'application/x-www-form-urlencoded'
+    }
+    body = {
+        'grant_type': 'client_credentials',
+        'client_id': AMADEUS_API_KEY,
+        'client_secret': AMADEUS_API_SECRET
+    }
+    response = requests.post(url=TOKEN_ENDPOINT, headers=header, data=body) # Idk why its data instead of json but yeah
+    # print(f"Your token is {response.json()['access_token']} and expires in {response.json()['expires_in']} seconds")
+    return response.json()['access_token']
+
 @login_manager.user_loader
 def load_user(user_id):
     return db.get_or_404(User, user_id)
@@ -71,6 +91,145 @@ def users():
             "test1", "test2", "test3"
             ] 
         }
+
+@app.route('/get-destination-code', methods=["GET", "POST"])
+def get_destination_code():
+    iataCodes = []
+    data = request.get_json()
+    amadeus_token = get_amadeus_token()
+    cities = [data.get('departureCity'), data.get('arrivalCity')]
+    
+    for city in cities:
+        parameters = {
+            "keyword" : city,
+            "max" : "2",
+            "include" : "AIRPORTS"
+        }
+        header = {
+            "Authorization": f"Bearer {amadeus_token}"
+        }
+        response = requests.get(url=API_ENDPOINT, params=parameters, headers=header)
+        try:
+            iataCodes.append(response.json()["data"][0]['iataCode'])
+        except IndexError:
+            return jsonify({"message" : f"IndexError: No airport code found for {city}. (N/A)" , "success" : False})
+        except KeyError:
+            return jsonify({"message" : f"KeyError: No airport code found for {city}. (Not found)" , "success" : False})
+    
+    print(iataCodes)
+    return jsonify({"success" : True, "iataCodes" : iataCodes})
+    
+@app.route("/search-flights", methods=["GET", "POST"])
+def search_flights():
+    amadeus_token = get_amadeus_token()
+    print(amadeus_token)
+    data = request.get_json()
+    originCode = data.get("originCode")
+    destinationCode = data.get("destinationCode")
+    numPassengers = str(data.get("numPassengers"))
+    nonStop = data.get("nonStop")
+
+    nonStopString = ''
+    if(nonStop):
+        nonStopString = "true"
+    else:
+        nonStopString = "false"
+
+    header = {
+        "accept" : "application/vnd.amadeus+json",
+        "Authorization": f"Bearer {amadeus_token}"
+    }
+
+    tripType = data.get("tripType")
+    if tripType == "1":
+        fromDate = data.get("fromDate")
+        parameters = {
+            "originLocationCode" : originCode,
+            "destinationLocationCode" : destinationCode,
+            "departureDate" : fromDate,
+            "adults" : numPassengers,
+            "nonStop" : nonStopString, 
+            "currencyCode": "USD",
+            "max": "3",
+        }
+    else:
+        fromDate = data.get("fromDate")
+        toDate = data.get("toDate")
+        parameters = {
+            "originLocationCode" : originCode,
+            "destinationLocationCode" : destinationCode,
+            "departureDate" : fromDate,
+            "returnDate" : toDate,
+            "adults" : numPassengers,
+            "nonStop" : nonStopString, 
+            "currencyCode": "USD",
+            "max": "3",
+        }
+
+    response = requests.get(url=FLIGHT_OFFERS_ENDPOINT, params=parameters, headers=header)
+    if response.status_code != 200:
+        print(f"check_flights() response code: {response.status_code}")
+        return jsonify({"message": "An error has occurred", "success": False})
+    
+    data = response.json()
+
+    if(data["meta"]["count"] == 0):
+        return jsonify({"message" : "There are no flights avaliable", "success" : False})
+    else:
+        flights_dict = {}
+        flights = data['data']
+        for flight in flights:
+            depature_flight_segments = flight["itineraries"][0]["segments"]
+            depature_flight_segments_dict = {}
+            depature_flight_number = 0
+            for segment in depature_flight_segments:
+                depature_flight_segments_dict[depature_flight_number] = {
+                    "depatureCode" : segment["departure"]["iataCode"],
+                    "departureTime" : segment["departure"]["at"].split("T")[0] + " " + segment["departure"]["at"].split("T")[1],
+                    "arrivalCode" : segment["arrival"]["iataCode"],
+                    "arrivalTime" : segment["arrival"]["at"].split("T")[0] + " " + segment["arrival"]["at"].split("T")[1],
+                    "flightDuration" : segment["duration"].split("PT")[1]
+                }
+                depature_flight_number += 1
+
+            return_flight_segments = None if tripType == "1" else flight["itineraries"][1]["segments"]
+            return_flight_segments_dict = {}
+            return_flight_number = 0
+            if return_flight_segments:
+                for segment in return_flight_segments:
+                    return_flight_segments_dict[return_flight_number] = {
+                        "depatureCode" : segment["departure"]["iataCode"],
+                        "departureTime" : segment["departure"]["at"].split("T")[0] + " " + segment["departure"]["at"].split("T")[1],
+                        "arrivalCode" : segment["arrival"]["iataCode"],
+                        "arrivalTime" : segment["arrival"]["at"].split("T")[0] + " " + segment["arrival"]["at"].split("T")[1],
+                        "flightDuration" : segment["duration"].split("PT")[1]
+                    }
+                return_flight_number += 1
+
+            flights_dict[int(flight["id"])] = {
+                "source" : flight["source"],
+                "flight-price" : "$" + flight["price"]["grandTotal"],
+                "origin" : flight["itineraries"][0]["segments"][0]["departure"]["iataCode"],
+                "destination" : flight["itineraries"][0]["segments"][len(depature_flight_segments)-1]["arrival"]["iataCode"],
+                "out-date" : flight["itineraries"][0]["segments"][0]["departure"]["at"].split("T")[0],
+                "return-date" : None if tripType == "1" else flight["itineraries"][1]["segments"][0]["departure"]["at"].split("T")[0],
+                "total-departure-flight-duration" : flight["itineraries"][0]["duration"].split("PT")[1],
+                "total-return-flight-duration" : None if tripType == "1" else flight["itineraries"][1]["duration"],
+                "departure_flight_routes" : depature_flight_segments_dict,
+                "return_flight_routes" : return_flight_segments_dict
+            }
+        
+        print(flights_dict)
+        return jsonify({"flightOffers" : flights_dict, "success" : True})
+    
+    
+    
+
+    
+
+    
+    
+    
 
 # Define a route that handles POST requests to the /submit-email endpoint
 @app.route('/submit-email', methods=['POST'])

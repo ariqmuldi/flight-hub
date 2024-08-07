@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 
-function OffersShowcase({ formData }) {
+function OffersShowcase({ formData } ) {
     return (
         <div>
             <h2>Flight Offers</h2>
