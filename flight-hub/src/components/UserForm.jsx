@@ -94,12 +94,12 @@ function UserForm(props) {
                 null :
                 <Form.Group className="mb-3" controlId="formBasicText" >
                     <Form.Label>Name</Form.Label>
-                    <Form.Control type="text" placeholder="Enter email" name="name" onChange={handleNameChange}/>
+                    <Form.Control type="text" placeholder="Enter name" name="name" onChange={handleNameChange}/>
                 </Form.Group>
                 }
                 <Form.Group className="mb-3" controlId="formBasicEmail">
                     <Form.Label>Email address</Form.Label>
-                    <Form.Control type="email" placeholder="Enter name" name="email" onChange={handleEmailChange}/>
+                    <Form.Control type="email" placeholder="Enter email" name="email" onChange={handleEmailChange}/>
                 </Form.Group>
 
                 <Form.Group className="mb-3" controlId="formBasicPassword">
