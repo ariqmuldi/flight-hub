@@ -9,12 +9,15 @@ import FormEmail from './components/FormEmail.jsx';
 import ButtonToServices from './components/ButtonToServices.jsx';
 import Footer from './components/Footer.jsx';
 import UserForm from './components/UserForm.jsx';
+import Container from 'react-bootstrap/esm/Container.js';
+import Row from 'react-bootstrap/esm/Row.js';
+import OffersInput from './components/OffersInput.jsx';
+import OffersContainer from './components/OffersContainer.jsx';
 
 function App() {
   return (
     <AuthProvider>
 
-    
       <Router>
         <Routes>
 
@@ -50,14 +53,26 @@ function App() {
           } >
           </Route>
 
+          <Route exact path = "/offers" element = {
+            <>
+              <Header />
+              <Container className="d-flex justify-content-around align-items-center mt-3 mb-3">
+                <Row className="h2 text-light">
+                  Flights
+                </Row>
+              </Container>
+              <OffersContainer />
+              <Footer />
+            </>
+          
+          } >
+          </Route>
+
         </Routes>
       </Router>
       
-      
-  
     </AuthProvider>
     
-   
   )
 }
 
