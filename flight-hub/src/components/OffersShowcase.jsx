@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
-function OffersShowcase({ formData } ) {
+function OffersShowcase({ formData, flightOffers } ) {
+    console.log(flightOffers.flightOffers[1])
     return (
         <div>
             <h2>Flight Offers</h2>

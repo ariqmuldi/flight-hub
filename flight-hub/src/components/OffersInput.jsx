@@ -9,7 +9,8 @@ import axios from 'axios';
 import * as formik from 'formik';
 import * as yup from 'yup';
 
-function OffersInput({ formData, handleInputChange, handleSubmit }) {
+function OffersInput({ formData, handleInputChange, handleFormSubmit }) {
+    const {haveSubmitted, setHaveSubmitted} = useState(false)
     const { Formik } = formik;
     const schema = yup.object().shape({
         numPassengers: yup.number()
@@ -41,11 +42,11 @@ function OffersInput({ formData, handleInputChange, handleSubmit }) {
         <Formik
             initialValues={formData}
             validationSchema={schema}
-            onSubmit={handleSubmit}
+            onSubmit={(e, { setSubmitting }) => { handleFormSubmit(e); setSubmitting(false); }}
         >
-        {({ handleSubmit, handleChange, values, touched, errors }) => (
+        {({ handleSubmit, handleChange, resetForm, values, touched, errors, isSubmitting }) => (
         <Container className="d-flex justify-content-evenly align-items-center mt-2">
-            <Form onSubmit={handleSubmit}>
+            <Form onSubmit={(e) => { handleSubmit(e); handleFormSubmit(e); }}>
                 <Row>
                     <Col md={3}>
                         <Form.Select 
@@ -64,7 +65,7 @@ function OffersInput({ formData, handleInputChange, handleSubmit }) {
                                 handleInputChange(e);
                             }} 
                             isInvalid={touched.numPassengers && !!errors.numPassengers}
-                            isValid={touched.numPassengers && !errors.numPassengers}/>
+                            isValid={touched.numPassengers && !errors.numPassengers} />
                             <Form.Control.Feedback type="invalid">
                                 {errors.numPassengers}
                             </Form.Control.Feedback>
