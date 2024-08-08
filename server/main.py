@@ -204,7 +204,7 @@ def search_flights():
                         "arrivalTime" : segment["arrival"]["at"].split("T")[0] + " " + segment["arrival"]["at"].split("T")[1],
                         "flightDuration" : segment["duration"].split("PT")[1]
                     }
-                return_flight_number += 1
+                    return_flight_number += 1
 
             flights_dict[int(flight["id"])] = {
                 "source" : flight["source"],

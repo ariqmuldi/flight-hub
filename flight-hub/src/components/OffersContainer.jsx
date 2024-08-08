@@ -10,6 +10,7 @@ function OffersContainer() {
     const [iataCodes, setIataCodes] = useState([]);
     const [flightOffers, setFlightOffers] = useState(null);
 
+    // Only one way works. Don't use round trip.
     const [formData, setFormData] = useState({
         tripType : "1",
         numPassengers : "",
@@ -81,7 +82,7 @@ function OffersContainer() {
         }
     }
 
-    const handleSubmit = async (e) => {
+    const handleFormSubmit = async (e) => {
         setIsFormSubmitted(true);
         console.log(formData)
 
@@ -111,9 +112,9 @@ function OffersContainer() {
             <OffersInput 
                 formData={formData} 
                 handleInputChange={handleInputChange} 
-                handleSubmit={handleSubmit} 
+                handleFormSubmit={handleFormSubmit} 
             />
-            {isFormSubmitted && <OffersShowcase formData={formData} />}
+            {(isFormSubmitted && flightOffers != null) && <OffersShowcase formData={formData} flightOffers={flightOffers}/>}
         </div>
     );
 
