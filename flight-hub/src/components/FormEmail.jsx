@@ -10,6 +10,7 @@ import axios from 'axios';
 
 function FormEmail() {
     const [email, setEmail] = useState('');   
+    const [phoneNumber, setPhoneNumber] = useState('');
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -35,8 +36,12 @@ function FormEmail() {
 
     }
 
-    function handleChange(e) {
+    function handleEmailChange(e) {
         setEmail(e.target.value)
+    }
+
+    function handlePhoneNumberChange(e) {
+        setPhoneNumber(e.target.value)
     }
 
     return (
@@ -45,7 +50,7 @@ function FormEmail() {
             <Row>
             <Container className="text-center mb-2">
                 {/* <Form.Label>Email address</Form.Label> */}
-                <p className="fw-bold h2 text-white"> Write your email below! </p>
+                <p className="fw-bold h2 text-white"> Write your email and phone number below! </p>
             </Container>
             </Row>
             <Row>
@@ -53,13 +58,17 @@ function FormEmail() {
                 <Form.Group className="" controlId="formBasicEmail">
 
                     <Container>
-                        <Form.Control type="email" name = "submitEmail" value={email} onChange={handleChange} placeholder="Enter your email to join!" />
+                        <Form.Control type="email" name = "submitEmail" value={email} onChange={handleEmailChange} placeholder="Enter your email to join!" />
                     </Container>
                 
                     <Container className="mt-2 mb-2 mx-auto text-muted text-center" >
                         <Form.Text>
-                        We'll never share your email with anyone else.
+                        We'll never share your email or phone number with anyone else.
                         </Form.Text>
+                    </Container>
+
+                    <Container className="mb-3">
+                        <Form.Control type="text" name = "submitPhoneNumber" value={phoneNumber} onChange={handlePhoneNumberChange} placeholder="Enter your phone number to join!" />
                     </Container>
 
                 </Form.Group>
