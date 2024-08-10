@@ -168,7 +168,7 @@ def search_flights():
 
     response = requests.get(url=FLIGHT_OFFERS_ENDPOINT, params=parameters, headers=header)
     if response.status_code != 200:
-        print(f"check_flights() response code: {response.status_code}")
+        print(f"response code: {response.status_code}")
         return jsonify({"message": "An error has occurred", "success": False})
     
     data = response.json()
@@ -184,7 +184,7 @@ def search_flights():
             depature_flight_number = 0
             for segment in depature_flight_segments:
                 depature_flight_segments_dict[depature_flight_number] = {
-                    "depatureCode" : segment["departure"]["iataCode"],
+                    "departureCode" : segment["departure"]["iataCode"],
                     "departureTime" : segment["departure"]["at"].split("T")[0] + " " + segment["departure"]["at"].split("T")[1],
                     "arrivalCode" : segment["arrival"]["iataCode"],
                     "arrivalTime" : segment["arrival"]["at"].split("T")[0] + " " + segment["arrival"]["at"].split("T")[1],
@@ -198,7 +198,7 @@ def search_flights():
             if return_flight_segments:
                 for segment in return_flight_segments:
                     return_flight_segments_dict[return_flight_number] = {
-                        "depatureCode" : segment["departure"]["iataCode"],
+                        "departure" : segment["departure"]["iataCode"],
                         "departureTime" : segment["departure"]["at"].split("T")[0] + " " + segment["departure"]["at"].split("T")[1],
                         "arrivalCode" : segment["arrival"]["iataCode"],
                         "arrivalTime" : segment["arrival"]["at"].split("T")[0] + " " + segment["arrival"]["at"].split("T")[1],

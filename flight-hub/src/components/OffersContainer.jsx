@@ -113,6 +113,7 @@ function OffersContainer() {
                 formData={formData} 
                 handleInputChange={handleInputChange} 
                 handleFormSubmit={handleFormSubmit} 
+                isFormSubmitted = {isFormSubmitted}
             />
             {(isFormSubmitted && flightOffers != null) && <OffersShowcase formData={formData} flightOffers={flightOffers}/>}
         </div>

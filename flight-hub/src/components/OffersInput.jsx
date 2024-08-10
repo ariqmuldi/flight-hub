@@ -9,7 +9,7 @@ import axios from 'axios';
 import * as formik from 'formik';
 import * as yup from 'yup';
 
-function OffersInput({ formData, handleInputChange, handleFormSubmit }) {
+function OffersInput({ formData, handleInputChange, handleFormSubmit, isFormSubmitted }) {
     const {haveSubmitted, setHaveSubmitted} = useState(false)
     const { Formik } = formik;
     const schema = yup.object().shape({
@@ -149,9 +149,16 @@ function OffersInput({ formData, handleInputChange, handleFormSubmit }) {
 
                 <Row>
                     <Col className="d-flex align-items-center justify-content-center mt-2">
+                        {isFormSubmitted ?
+                        <Button className="buttonSearchFlightOffers" variant="success" type="submit" 
+                        onClick={() => (window.location.reload())}>
+                        Find more offers
+                        </Button>
+                        :
                         <Button className="buttonSearchFlightOffers" variant="primary" type="submit">
                         Search flight offers
                         </Button>
+                        }
                     </Col>
                 </Row>
             </Form>
