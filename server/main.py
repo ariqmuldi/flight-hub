@@ -221,15 +221,6 @@ def search_flights():
         
         print(flights_dict)
         return jsonify({"flightOffers" : flights_dict, "success" : True})
-    
-    
-    
-
-    
-
-    
-    
-    
 
 # Define a route that handles POST requests to the /submit-email endpoint
 @app.route('/submit-email', methods=['POST'])
@@ -266,8 +257,7 @@ def register():
     db.session.add(new_user)
     db.session.commit()
 
-    login_user(new_user)
-    return jsonify({"user" : {"email": current_user.email, "name": current_user.name}, 
+    return jsonify({"user" : {"id": current_user.id, "email": current_user.email, "name": current_user.name}, 
                     "message": "Succesful!", "redirectLogin" : False, "isLogin" : False, "success" : True}), 200
 
 @app.route('/login', methods=["POST"])
@@ -289,7 +279,7 @@ def login():
         return jsonify({"user" : None, "message": "Password incorrect, please try again.", "isLogin" : True, "success" : False})
     else:
         login_user(user)
-        return jsonify({"user" : { "email": current_user.email, "name": current_user.name}, 
+        return jsonify({"user" : { "id": current_user.id, "email": current_user.email, "name": current_user.name}, 
                         "message": "Success!", "isLogin" : True, "success" : True})
     
 @app.route('/logout', methods=["POST"])
@@ -301,9 +291,44 @@ def logout():
 def get_current_user():
     # Ensure the user is logged in before accessing current_user
     if current_user.is_authenticated:
-        return jsonify({"email": current_user.email, "name": current_user.name})
+        return jsonify({"id" : current_user.id, "email": current_user.email, "name": current_user.name})
     else:
         return jsonify({"message": "User not authenticated"}), 401
+    
+@app.route("/blog",  methods=["GET"])
+def get_blog_posts():
+    result = db.session.execute(db.select(BlogPost))
+    posts_dict = {index: {
+        "id": post.id,
+        "author_id" : post.author_id,
+        "title": post.title,
+        "subtitle": post.subtitle,
+        "date": post.date,
+        "body": post.body,
+        "img_url": post.img_url
+    } for index, post in enumerate(result.scalars().all())}
+    print(posts_dict)
+    # posts = result.scalars().all()
+    # serialized_posts = [
+    #     {
+    #         "id": post.id,
+    #         "title": post.title,
+    #         "subtitle": post.subtitle,
+    #         "date": post.date,
+    #         "body": post.body,
+    #         "img_url": post.img_url
+    #     }
+    #     for post in posts
+    # ]
+
+    # allPosts = {}
+    # post_index = 0
+    # for post in serialized_posts:
+    #     allPosts[post_index] = post
+    #     post_index += 1
+
+    # print(allPosts)
+    return jsonify({"posts" : posts_dict, "message": "Success!", "success" : True})
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

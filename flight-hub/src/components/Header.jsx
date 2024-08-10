@@ -32,6 +32,10 @@ function Header() {
       navigate("/offers")
     }
 
+    const handleClickBlog = () => {
+      navigate("/blog")
+    }
+
     useEffect(() => {
       // Log the user state whenever it changes for debugging purposes
       console.log('User state updated:', user);
@@ -46,7 +50,7 @@ function Header() {
               <Nav className="ms-auto">
                 <Nav.Link className="navbar-items" onClick={handleClickHome} >Home</Nav.Link>
                 <Nav.Link className="navbar-items" onClick={handleClickOffers}>Offers</Nav.Link>
-                <Nav.Link className="navbar-items">Blog</Nav.Link>
+                <Nav.Link className="navbar-items" onClick={handleClickBlog}>Blog</Nav.Link>
                 {user ? (
                         <Nav.Link className="navbar-items" onClick={handleLogout}>Log Out</Nav.Link>
                     ) : (

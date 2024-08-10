@@ -13,6 +13,7 @@ import Container from 'react-bootstrap/esm/Container.js';
 import Row from 'react-bootstrap/esm/Row.js';
 import OffersInput from './components/OffersInput.jsx';
 import OffersContainer from './components/OffersContainer.jsx';
+import BlogShowcase from './components/BlogShowcase.jsx';
 
 function App() {
   return (
@@ -62,6 +63,16 @@ function App() {
                 </Row>
               </Container>
               <OffersContainer />
+              <Footer />
+            </>
+          
+          } >
+          </Route>
+
+          <Route exact path = "/blog" element = {
+            <>
+              <Header />
+              <BlogShowcase />
               <Footer />
             </>
           
