@@ -14,6 +14,8 @@ import Row from 'react-bootstrap/esm/Row.js';
 import OffersInput from './components/OffersInput.jsx';
 import OffersContainer from './components/OffersContainer.jsx';
 import BlogShowcase from './components/BlogShowcase.jsx';
+import CreateBlogPost from './components/CreateBlogPost.jsx';
+import ProtectedRoute from './context/ProtectedRoute.jsx';
 
 function App() {
   return (
@@ -78,6 +80,28 @@ function App() {
           
           } >
           </Route>
+
+          <Route exact path = "/blog/create-post" element = {
+            <>
+              <Header />
+              <CreateBlogPost />
+              <Footer />
+            </>
+          
+          } >
+          </Route>
+
+          <Route exact path = "/blog/post/:id" element = {
+            <>
+              <Header />
+              
+              <Footer />
+            </>
+          
+          } >
+          </Route>
+
+          
 
         </Routes>
       </Router>

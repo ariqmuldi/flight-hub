@@ -5,9 +5,13 @@ import Container from 'react-bootstrap/esm/Container';
 import Row from 'react-bootstrap/esm/Row';
 import Col from 'react-bootstrap/esm/Col';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext';
 
 function BlogShowcase() {
     const [posts, setPosts] = useState([]);
+    const navigate = useNavigate();
+    const { user } = useContext(AuthContext);
 
     useEffect(() => {
         const fetchPosts = async () => {
@@ -23,17 +27,19 @@ function BlogShowcase() {
     }, []); // Empty dependency array means this effect runs once after the initial render
 
     useEffect(() => {
-        if (posts.length > 0) {
-            console.log(posts);
-        }
+        if (posts.length > 0) { }
     }, [posts]);
 
-    const showAllPosts = posts.map(post => {
+    const handleClickNewPost = () => {
+        navigate("/blog/create-post");
+      }
+
+    const showAllPosts = posts.map((post, index) => {
         return (
-            <Col>
-                <Card style={{ width: '18rem' }}>
+            <Col key={index} className="mb-4">
+                <Card className="h-100" style={{ width: '18rem' }}>
                     <Card.Img variant="top" src={post["img_url"]} 
-                    style={{maxHeight: "180px", maxWidth:"286px"}}/>
+                    style={{maxHeight: "180px", maxWidth:"286px", objectFit: "cover"}}/>
                     <Card.Body>
                         <Card.Title>{post["title"]}</Card.Title>
                         <Card.Text>
@@ -47,24 +53,23 @@ function BlogShowcase() {
     })
 
     return (
-        <Container className="d-flex align-items-center justify-content-center " >
-            <Row>
-                {/* <Col>
-                    <Card style={{ width: '18rem' }}>
-                        <Card.Img variant="top" src="https://img.freepik.com/free-vector/saguaro-cactus-plant-white-background_1308-78292.jpg" 
-                        style={{maxHeight: "180px", maxWidth:"180px"}}/>
-                        <Card.Body>
-                        <Card.Title>Card Title</Card.Title>
-                        <Card.Text>
-                        Some quick example text to build on the card title and make up the
-                        bulk of the card's content.
-                        </Card.Text>
-                        <Button variant="primary">Go to post</Button>
-                        </Card.Body>
-                    </Card>
-                </Col> */}
+        <Container className="d-flex flex-column align-items-center">
+            <Row className="mt-4 mb-4">
+                <Col className="text-center">
+                    { user === null ?
+                    <Button className="newPostButton" variant="primary" type="submit">
+                    Login to Post
+                    </Button>
+                    :
+                    <Button className="newPostButton" variant="primary" type="submit" onClick={handleClickNewPost}>
+                        + New Post
+                    </Button>
+                    }
+                </Col>
+            </Row>
+
+            <Row className="">
                 {showAllPosts}
-            
             </Row>
         
     </Container>

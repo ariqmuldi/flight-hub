@@ -7,6 +7,8 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import relationship, DeclarativeBase, Mapped, mapped_column
 from sqlalchemy import Integer, String, Text
 from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
+from flask import abort
 from dotenv import load_dotenv
 TOKEN_ENDPOINT = "https://test.api.amadeus.com/v1/security/oauth2/token"
 API_ENDPOINT = "https://test.api.amadeus.com/v1/reference-data/locations/cities"
@@ -16,6 +18,7 @@ load_dotenv()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv("FLASK_SECRET_KEY") # Session managment
+# app.config['SESSION_TYPE'] = 'filesystem'
 cors = CORS(app, origins="*", supports_credentials=True)
 
 AMADEUS_API_KEY = os.getenv("AMADEUS_API_KEY")
@@ -66,6 +69,25 @@ class Comment(db.Model):
 
 with app.app_context():
     db.create_all()
+
+
+def admin_only(f):
+    @wraps(f)
+    def decorator_function(*args,**kwargs):
+        # If id is not 1 then return abort with 403 error
+        if current_user.is_authenticated:
+            print(f"User ID: {current_user.id}")
+            print(type(current_user.id))
+        else:
+            print("User not authenticated")
+        if current_user.is_authenticated and current_user.id != 1:
+            return abort(403)
+        # If user is not authenticated
+        elif not current_user.is_authenticated:
+            return abort(403)
+        # Otherwise continue with the route function
+        return f(*args, **kwargs)
+    return decorator_function
 
 def get_amadeus_token():
     header = {
@@ -307,28 +329,29 @@ def get_blog_posts():
         "body": post.body,
         "img_url": post.img_url
     } for index, post in enumerate(result.scalars().all())}
-    print(posts_dict)
-    # posts = result.scalars().all()
-    # serialized_posts = [
-    #     {
-    #         "id": post.id,
-    #         "title": post.title,
-    #         "subtitle": post.subtitle,
-    #         "date": post.date,
-    #         "body": post.body,
-    #         "img_url": post.img_url
-    #     }
-    #     for post in posts
-    # ]
-
-    # allPosts = {}
-    # post_index = 0
-    # for post in serialized_posts:
-    #     allPosts[post_index] = post
-    #     post_index += 1
-
-    # print(allPosts)
     return jsonify({"posts" : posts_dict, "message": "Success!", "success" : True})
+
+@app.route("/blog/create-post", methods=["POST"])
+def add_new_post():
+    print(get_current_user())
+    
+    print(current_user.is_authenticated)
+    
+    # print(current_user.id)
+    data = request.get_json()
+    user = data.get('user')
+    title = data.get('title')
+    subtitle = data.get('subtitle')
+    date = data.get('date')
+    body = data.get('body')
+    imgURL = data.get('imgURL')
+
+    if user:
+        new_post = BlogPost(title=title, subtitle=subtitle, body=body, img_url=imgURL, author_id=user["id"], date=date)
+        db.session.add(new_post)
+        db.session.commit()
+    
+    return jsonify({"message": "Added Post!", "success" : True})
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
