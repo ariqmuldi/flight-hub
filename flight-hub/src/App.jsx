@@ -18,6 +18,7 @@ import CreateBlogPost from './components/CreateBlogPost.jsx';
 import ProtectedRoute from './context/ProtectedRoute.jsx';
 import Posts from './components/Posts.jsx';
 import EditPosts from './components/EditPosts.jsx';
+import CommentForm from './components/CommentForm.jsx';
 
 function App() {
   return (
@@ -107,6 +108,16 @@ function App() {
             <>
               <Header />
               <EditPosts />
+              <Footer />
+            </>
+          
+          } >
+          </Route>
+
+          <Route exact path = "/blog/post/comment/:postId" element = {
+            <>
+              <Header />
+              <CommentForm />
               <Footer />
             </>
           

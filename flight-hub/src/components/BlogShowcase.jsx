@@ -79,7 +79,7 @@ function BlogShowcase() {
             <Row className="mt-4 mb-4">
                 <Col className="text-center">
                     { user === null ?
-                    <Button className="newPostButton" variant="primary" type="submit">
+                    <Button className="newPostButton" variant="primary" type="submit" onClick={() => {navigate("/login")}}>
                     Login to Post
                     </Button>
                     :

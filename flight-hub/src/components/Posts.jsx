@@ -16,7 +16,27 @@ function Posts() {
     const [post, setPost] = useState({});
     const [author, setAuthor] = useState("");
     const { user } = useContext(AuthContext);
+    const [comments, setComments] = useState([]);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const fetchComments = async () => {
+            try {
+                const response = await axios.get(`http://127.0.0.1:5000/blog/post/comment/${postId}`);
+                setComments(Object.values(response.data.comments))
+            } catch (err) {
+                console.error('Error fetching blog post:', err);
+            }
+        };
+
+        fetchComments();
+    }, []); // Empty dependency array means this effect runs once after the initial render
+
+    useEffect(() => {
+        if (Object.keys(comments).length > 0) { 
+            console.log(comments) 
+        }
+    }, [comments]);
 
     useEffect(() => {
         const fetchPost = async () => {
@@ -55,11 +75,24 @@ function Posts() {
         }
     }, [post]);
     
-    
-
     const handleFormSubmit = async (e) => {
         navigate(`/blog/edit-post/${postId}`);
     }
+
+    const handleCommentFormSubmit = async (e) => {
+        navigate(`/blog/post/comment/${postId}`);
+    }
+
+    const showAllComments = comments.map((comment, index) => {
+        return(
+            <Col key={index}>
+                <Container className="d-flex flex-column align-items-center justify-content-center text-light">
+                    <p className="fw-bold"> By {comment["author_name"]}: <span className="fw-normal">{comment["text"]}</span> </p> 
+                    
+                </Container>
+            </Col>
+        )
+    })
 
     return (
         <Container className="d-flex flex-column align-items-center">
@@ -87,13 +120,38 @@ function Posts() {
                 </Col>   
             </Row>
 
-            <Row className="d-flex align-items-center">
+            <Row className="d-flex align-items-center mb-5">
                 <Col className="d-flex flex-column text-light justify-content-center align-items-center text-center">  
                     <p style={{ wordBreak: "break-word", whiteSpace: "pre-wrap" }}>{post["body"]}</p>
                 </Col>
             </Row>
 
+            <Row>
+                {(user && user["id"] != null) ?
+                <Form className="mt-5" onSubmit={handleCommentFormSubmit}>
+                    <Button variant="primary" type="submit">
+                    Comment
+                    </Button>
+                </Form>
+                :
+                <Button className="mt-5" variant="primary" type="submit" onClick={() => {navigate("/login")}}>
+                    Login to Comment
+                </Button>
+                }
+            </Row>
+            
+
+            <Row className="mt-3 d-flex flex-column align-items-center justify-content-center text-center">
+                <Col className="h4 text-light">
+                Comments:
+                </Col>
+
+                {showAllComments}
+            </Row>
+
         </Container>
+
+        
     );
 }
 
