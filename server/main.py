@@ -10,6 +10,11 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from flask import abort
 from dotenv import load_dotenv
+from sqlalchemy.inspection import inspect
+import schedule
+import time
+import threading
+import datetime
 TOKEN_ENDPOINT = "https://test.api.amadeus.com/v1/security/oauth2/token"
 API_ENDPOINT = "https://test.api.amadeus.com/v1/reference-data/locations/cities"
 FLIGHT_OFFERS_ENDPOINT = "https://test.api.amadeus.com/v2/shopping/flight-offers"
@@ -17,6 +22,25 @@ FLIGHT_OFFERS_ENDPOINT = "https://test.api.amadeus.com/v2/shopping/flight-offers
 load_dotenv()
 
 app = Flask(__name__)
+
+def job():
+    print("Scheduled job running at:", datetime.datetime.now())
+def run_scheduler():
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+# Schedule the job to run at 2:01 PM daily
+schedule.every().day.at("14:15").do(job)
+# Flag to ensure scheduler thread is started only once
+scheduler_thread_started = False
+def start_scheduler_thread():
+    global scheduler_thread_started
+    if not scheduler_thread_started:
+        scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
+        scheduler_thread.start()
+        scheduler_thread_started = True
+start_scheduler_thread()
+
 app.config['SECRET_KEY'] = os.getenv("FLASK_SECRET_KEY") # Session managment
 # app.config['SESSION_TYPE'] = 'filesystem'
 cors = CORS(app, origins="*", supports_credentials=True)
@@ -33,6 +57,14 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
 db = SQLAlchemy(model_class=Base)
 db.init_app(app)
 
+class SubmittedUsers(UserMixin, db.Model):
+    __tablename__ = "submitted_users"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    email: Mapped[str] = mapped_column(String(100), unique=True)
+    phone_number: Mapped[str] = mapped_column(String(100), unique=True)
+    departure_city: Mapped[str] = mapped_column(String(100))
+    arrival_city: Mapped[str] = mapped_column(String(100))
+
 class User(UserMixin, db.Model):
     __tablename__ = "users"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -41,6 +73,18 @@ class User(UserMixin, db.Model):
     name: Mapped[str] = mapped_column(String(100))
     posts = relationship("BlogPost", back_populates="author")
     comments = relationship("Comment", back_populates="comment_author")
+
+    def to_dict(self):
+        """Convert SQLAlchemy model instance into a dictionary, excluding email and password."""
+        # Define the fields you want to include
+        fields = {
+            "id": self.id,
+            "name": self.name,
+            # Exclude email and password
+            # "email": self.email,
+            # "password": self.password
+        }
+        return fields
 
 class BlogPost(db.Model):
     __tablename__ = "blog_posts"
@@ -55,6 +99,10 @@ class BlogPost(db.Model):
     
     #***************Parent Relationship*************#
     comments = relationship("Comment", back_populates="parent_post")
+
+    def to_dict(self):
+        """Convert SQLAlchemy model instance into a dictionary."""
+        return {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
 
 class Comment(db.Model):
     __tablename__ = "comments"
@@ -333,11 +381,6 @@ def get_blog_posts():
 
 @app.route("/blog/create-post", methods=["POST"])
 def add_new_post():
-    print(get_current_user())
-    
-    print(current_user.is_authenticated)
-    
-    # print(current_user.id)
     data = request.get_json()
     user = data.get('user')
     title = data.get('title')
@@ -352,6 +395,25 @@ def add_new_post():
         db.session.commit()
     
     return jsonify({"message": "Added Post!", "success" : True})
+
+@app.route("/blog/post/<int:post_id>", methods=["GET", "POST"])
+def show_post(post_id):
+    requested_post = db.get_or_404(BlogPost, post_id)
+    post_dict = requested_post.to_dict()
+    return jsonify({"post" : post_dict, "message": "Success", "success" : True})
+
+@app.route("/get-user-by-id", methods=["GET", "POST"])
+def get_user_by_id():
+    data = request.get_json()
+    id = data.get('id')
+    requested_user = db.get_or_404(User, id)
+    user_dict = requested_user.to_dict()
+    print(user_dict)
+    return jsonify({"user" : user_dict, "message": "Success", "success" : True})
+
+@app.route("/submitted-users", methods=["GET", "POST"])
+def submitted_users():
+    return
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
