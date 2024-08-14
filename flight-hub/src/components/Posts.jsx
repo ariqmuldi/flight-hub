@@ -5,11 +5,18 @@ import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import Image from 'react-bootstrap/Image';
 import Col from 'react-bootstrap/esm/Col';
+import { AuthContext } from '../context/AuthContext';
+import Form from 'react-bootstrap/Form';
+import Button from 'react-bootstrap/esm/Button';
+import { useNavigate } from 'react-router-dom';
+
 
 function Posts() {
     const { postId } = useParams();
     const [post, setPost] = useState({});
     const [author, setAuthor] = useState("");
+    const { user } = useContext(AuthContext);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchPost = async () => {
@@ -47,9 +54,24 @@ function Posts() {
 
         }
     }, [post]);
+    
+    
+
+    const handleFormSubmit = async (e) => {
+        navigate(`/blog/edit-post/${postId}`);
+    }
 
     return (
         <Container className="d-flex flex-column align-items-center">
+            { (user && user["id"] != null && user["id"] == author["id"]) ?
+            <Form className="mt-3" onSubmit={handleFormSubmit}>
+                <Button variant="primary" type="submit">
+                Edit Post
+                </Button>
+            </Form>
+            :
+            null
+            }
             <Row className="d-flex align-items-center mb-5">
                 <Col className="d-flex justify-content-center">
                     <Image src={post["img_url"]} style={{maxHeight: "250px", maxWidth:"500px"}} fluid />

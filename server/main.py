@@ -103,24 +103,6 @@ class Comment(db.Model):
 with app.app_context():
     db.create_all()
 
-def admin_only(f):
-    @wraps(f)
-    def decorator_function(*args,**kwargs):
-        # If id is not 1 then return abort with 403 error
-        if current_user.is_authenticated:
-            print(f"User ID: {current_user.id}")
-            print(type(current_user.id))
-        else:
-            print("User not authenticated")
-        if current_user.is_authenticated and current_user.id != 1:
-            return abort(403)
-        # If user is not authenticated
-        elif not current_user.is_authenticated:
-            return abort(403)
-        # Otherwise continue with the route function
-        return f(*args, **kwargs)
-    return decorator_function
-
 def get_amadeus_token():
     header = {
             'Content-Type': 'application/x-www-form-urlencoded'
@@ -390,7 +372,7 @@ def register():
     new_user = User(email=email, name=name, password=password_hashed)
     db.session.add(new_user)
     db.session.commit()
-
+    login_user(new_user)
     return jsonify({"user" : {"id": current_user.id, "email": current_user.email, "name": current_user.name}, 
                     "message": "Succesful!", "redirectLogin" : False, "isLogin" : False, "success" : True}), 200
 
@@ -466,6 +448,30 @@ def show_post(post_id):
     post_dict = requested_post.to_dict()
     return jsonify({"post" : post_dict, "message": "Success", "success" : True})
 
+@app.route("/blog/edit-post/<int:post_id>", methods=["POST"])
+def edit_post(post_id):
+    post = db.get_or_404(BlogPost, post_id)
+    if post:
+        data = request.get_json()
+        post.title = data.get("title")
+        post.subtitle = data.get("subtitle")
+        post.img_url = data.get("imgURL")
+        post.body = data.get("body")
+        db.session.commit()
+        return jsonify({"message" : "Success", "success" : True})
+    else:
+        return jsonify({"message" : "Failed", "success" : False})
+    
+@app.route("/blog/delete-post/<int:post_id>", methods=["POST"])
+def delete_post(post_id):
+    post_to_delete = db.get_or_404(BlogPost, post_id)
+    if post_to_delete:
+        db.session.delete(post_to_delete)
+        db.session.commit()
+        return jsonify({"message" : "Success", "success" : True})
+    else:
+        return jsonify({"message" : "Failed", "success" : False})
+   
 @app.route("/get-user-by-id", methods=["GET", "POST"])
 def get_user_by_id():
     data = request.get_json()
@@ -474,6 +480,7 @@ def get_user_by_id():
     user_dict = requested_user.to_dict()
     print(user_dict)
     return jsonify({"user" : user_dict, "message": "Success", "success" : True})
+
 
 @app.route("/submitted-users", methods=["GET", "POST"])
 def submitted_users():

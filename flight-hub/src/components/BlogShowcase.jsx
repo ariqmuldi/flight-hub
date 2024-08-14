@@ -38,6 +38,16 @@ function BlogShowcase() {
         navigate(`/blog/post/${postId}`);
     }
 
+    const handleDeletePost = async (postId) => {
+        try {
+            const response = await axios.post(`http://127.0.0.1:5000/blog/delete-post/${postId}`);
+        }
+        catch (err) {
+            console.log(err)
+        }
+        location.reload()
+    }
+
     const showAllPosts = posts.map((post, index) => {
         return (
             <Col key={index} className="mb-4">
@@ -49,7 +59,15 @@ function BlogShowcase() {
                         <Card.Text>
                         {post["subtitle"]}
                         </Card.Text>
-                        <Button variant="primary" onClick={() => handleClickGoToPost(index + 1)}>Go to post</Button>
+                        <Container className="d-flex align-items-center justify-content-evenly">
+                            <Button variant="primary" onClick={() => handleClickGoToPost(index + 1)}>Go to post</Button>
+                            { (user && user["id"] != null && user["id"] == 3) ?
+                            <Button className="mr-2" variant="danger" onClick={() => handleDeletePost(index + 1)}>✖</Button>
+                            :
+                            null
+                            }
+                        </Container>
+                        
                     </Card.Body>
                 </Card>
             </Col>

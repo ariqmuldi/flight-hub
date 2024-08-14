@@ -17,6 +17,7 @@ import BlogShowcase from './components/BlogShowcase.jsx';
 import CreateBlogPost from './components/CreateBlogPost.jsx';
 import ProtectedRoute from './context/ProtectedRoute.jsx';
 import Posts from './components/Posts.jsx';
+import EditPosts from './components/EditPosts.jsx';
 
 function App() {
   return (
@@ -96,6 +97,16 @@ function App() {
             <>
               <Header />
               <Posts />
+              <Footer />
+            </>
+          
+          } >
+          </Route>
+
+          <Route exact path = "/blog/edit-post/:postId" element = {
+            <>
+              <Header />
+              <EditPosts />
               <Footer />
             </>
           
