@@ -14,7 +14,10 @@ from sqlalchemy.inspection import inspect
 import schedule
 import time
 import threading
-import datetime
+from datetime import datetime, timedelta
+import smtplib
+from email.message import EmailMessage
+from twilio.rest import Client
 TOKEN_ENDPOINT = "https://test.api.amadeus.com/v1/security/oauth2/token"
 API_ENDPOINT = "https://test.api.amadeus.com/v1/reference-data/locations/cities"
 FLIGHT_OFFERS_ENDPOINT = "https://test.api.amadeus.com/v2/shopping/flight-offers"
@@ -22,24 +25,6 @@ FLIGHT_OFFERS_ENDPOINT = "https://test.api.amadeus.com/v2/shopping/flight-offers
 load_dotenv()
 
 app = Flask(__name__)
-
-def job():
-    print("Scheduled job running at:", datetime.datetime.now())
-def run_scheduler():
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
-# Schedule the job to run at 2:01 PM daily
-schedule.every().day.at("14:15").do(job)
-# Flag to ensure scheduler thread is started only once
-scheduler_thread_started = False
-def start_scheduler_thread():
-    global scheduler_thread_started
-    if not scheduler_thread_started:
-        scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
-        scheduler_thread.start()
-        scheduler_thread_started = True
-start_scheduler_thread()
 
 app.config['SECRET_KEY'] = os.getenv("FLASK_SECRET_KEY") # Session managment
 # app.config['SESSION_TYPE'] = 'filesystem'
@@ -118,7 +103,6 @@ class Comment(db.Model):
 with app.app_context():
     db.create_all()
 
-
 def admin_only(f):
     @wraps(f)
     def decorator_function(*args,**kwargs):
@@ -161,6 +145,86 @@ def users():
             "test1", "test2", "test3"
             ] 
         }
+
+def job():
+    with app.app_context():
+        result = db.session.execute(db.select(SubmittedUsers))
+        submitted_users_list = [
+            {
+                "id": curr.id,
+                "email": curr.email,
+                "phone_number": curr.phone_number,
+                "departure_city": curr.departure_city,
+                "arrival_city": curr.arrival_city
+            }
+            for curr in result.scalars().all()
+        ]
+
+        smtplib_email = os.getenv("SMTPLIB_EMAIL")
+        smtplib_password = os.getenv("SMTPLIB_PASSWORD")
+        twilio_account_sid = os.getenv("TWILIO_ACCOUNT_SID")
+        twilio_auth_token = os.getenv("TWILIO_AUTH_TOKEN")
+        client = Client(twilio_account_sid, twilio_auth_token)
+
+        amadeus_token = get_amadeus_token()
+        header = {
+            "accept" : "application/vnd.amadeus+json",
+            "Authorization": f"Bearer {amadeus_token}"
+        }
+
+        for submitted_users in submitted_users_list:
+            print(amadeus_token)
+            msg = EmailMessage()
+            tomorrow = datetime.now() + timedelta(1)
+            parameters = {
+                "originLocationCode" : submitted_users["departure_city"],
+                "destinationLocationCode" : submitted_users["arrival_city"],
+                "departureDate" : tomorrow.strftime('%Y-%m-%d'),
+                "adults" : "1",
+                "nonStop" : "false", 
+                "currencyCode": "USD",
+                "max": "1",
+            }
+
+            response = requests.get(url=FLIGHT_OFFERS_ENDPOINT, params=parameters, headers=header)
+            if response.status_code != 200:
+                print(f"response code: {response.status_code}")
+            else:
+                print("Success!")
+                data = response.json()
+
+            totalPrice = data['data'][0]['price']['grandTotal']
+            msg['Subject'] = "Low Flight Offer From Flight Hub! 🚀"
+            msg['From'] = smtplib_email
+            msg['To'] = submitted_users["email"]
+            msg.set_content(f"Only💲{totalPrice} to fly from {submitted_users["departure_city"]} to {submitted_users["arrival_city"]} tomorrow! Get your tickets now! 🎟️")
+            with smtplib.SMTP("smtp.gmail.com", port=587) as connection:
+                connection.starttls()
+                connection.login(user=smtplib_email, password=smtplib_password)
+                connection.send_message(msg)
+
+            message = client.messages.create(
+                from_='whatsapp:+14155238886',
+                body=f"Only💲{totalPrice} to fly from {submitted_users["departure_city"]} to {submitted_users["arrival_city"]} tomorrow! Get your tickets now! 🎟️",
+                to=f"whatsapp:+{submitted_users["phone_number"]}"
+            )
+
+        print(submitted_users_list)
+def run_scheduler():
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+# Schedule the job to run at 2:01 PM daily
+schedule.every().day.at("11:27").do(job)
+# Flag to ensure scheduler thread is started only once
+scheduler_thread_started = False
+def start_scheduler_thread():
+    global scheduler_thread_started
+    if not scheduler_thread_started:
+        scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
+        scheduler_thread.start()
+        scheduler_thread_started = True
+start_scheduler_thread()
 
 @app.route('/get-destination-code', methods=["GET", "POST"])
 def get_destination_code():
@@ -413,7 +477,36 @@ def get_user_by_id():
 
 @app.route("/submitted-users", methods=["GET", "POST"])
 def submitted_users():
-    return
+    iataCodes = []
+    data = request.get_json()
+    amadeus_token = get_amadeus_token()
+    email = data.get("email")
+    phoneNumber = data.get("phoneNumber")
+    cities = [data.get("departureCity"), data.get("arrivalCity")]
+
+    for city in cities:
+        parameters = {
+            "keyword" : city,
+            "max" : "2",
+            "include" : "AIRPORTS"
+        }
+        header = {
+            "Authorization": f"Bearer {amadeus_token}"
+        }
+        response = requests.get(url=API_ENDPOINT, params=parameters, headers=header)
+        try:
+            iataCodes.append(response.json()["data"][0]['iataCode'])
+        except IndexError:
+            return jsonify({"message" : f"IndexError: No airport code found for {city}. (N/A)" , "success" : False})
+        except KeyError:
+            return jsonify({"message" : f"KeyError: No airport code found for {city}. (Not found)" , "success" : False})
+        
+    new_submitted_user = SubmittedUsers(email=email, phone_number=phoneNumber, 
+                                        departure_city=iataCodes[0], arrival_city=iataCodes[1])
+    db.session.add(new_submitted_user)
+    db.session.commit()
+
+    return jsonify({"message" : "Success! Added to the database!", "success" : True})
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
