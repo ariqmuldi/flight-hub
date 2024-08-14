@@ -13,18 +13,18 @@ function FormEmail() {
     const [phoneNumber, setPhoneNumber] = useState('');
     const [departureCity, setDepartureCity] = useState('');
     const [arrivalCity, setArrivalCity] = useState('');
+    const [isFormSubmitted, setIsFormSubmitted] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setIsFormSubmitted(true)
         console.log("Form was submitted");
         console.log(email)
 
         try {
             // Make a POST request to the Flask backend with the email data
             const response = await axios.post('http://127.0.0.1:5000/submitted-users', 
-                {
-                email: email
-                }, 
+                { email: email, phoneNumber: phoneNumber, departureCity : departureCity, arrivalCity : arrivalCity}, 
                 {
                 headers: {
                     'Content-Type': 'application/json', // Set the content type to JSON
@@ -62,12 +62,18 @@ function FormEmail() {
                 {/* <Form.Label>Email address</Form.Label> */}
                 <p className="fw-bold h2 text-white"> Write your email and phone number below! </p>
             </Container>
-            <Container className="text-center mb-3">
+            <Container className="text-center mb-1">
                 {/* <Form.Label>Email address</Form.Label> */}
                 <p className="fw-bold h6 text-white"> We will send an offer to your email and phone every midnight! (One Way only for now!) </p>
+                { isFormSubmitted ?
+                <p className="text-success fw-bold">Success!</p>
+                :
+                null
+                }
             </Container>
             </Row>
-            <Row>
+            <Row className="d-flex flex-column justify-content-around align-items-center">
+            
             <Form onSubmit={handleSubmit} action="POST">
                 <Form.Group className="" controlId="formBasicEmail">
 
