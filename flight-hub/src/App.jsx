@@ -16,6 +16,7 @@ import OffersContainer from './components/OffersContainer.jsx';
 import BlogShowcase from './components/BlogShowcase.jsx';
 import CreateBlogPost from './components/CreateBlogPost.jsx';
 import ProtectedRoute from './context/ProtectedRoute.jsx';
+import Posts from './components/Posts.jsx';
 
 function App() {
   return (
@@ -91,10 +92,10 @@ function App() {
           } >
           </Route>
 
-          <Route exact path = "/blog/post/:id" element = {
+          <Route exact path = "/blog/post/:postId" element = {
             <>
               <Header />
-              
+              <Posts />
               <Footer />
             </>
           

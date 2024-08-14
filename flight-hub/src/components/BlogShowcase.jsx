@@ -32,7 +32,11 @@ function BlogShowcase() {
 
     const handleClickNewPost = () => {
         navigate("/blog/create-post");
-      }
+    }
+
+    const handleClickGoToPost = (postId) => {
+        navigate(`/blog/post/${postId}`);
+    }
 
     const showAllPosts = posts.map((post, index) => {
         return (
@@ -45,7 +49,7 @@ function BlogShowcase() {
                         <Card.Text>
                         {post["subtitle"]}
                         </Card.Text>
-                        <Button variant="primary">Go to post</Button>
+                        <Button variant="primary" onClick={() => handleClickGoToPost(index + 1)}>Go to post</Button>
                     </Card.Body>
                 </Card>
             </Col>
