@@ -99,6 +99,7 @@ class Comment(db.Model):
     post_id: Mapped[int] = mapped_column(Integer, db.ForeignKey("blog_posts.id"))
     parent_post = relationship("BlogPost", back_populates="comments")
     text: Mapped[str] = mapped_column(Text, nullable=False)
+    author_name: Mapped[str] = mapped_column(Text, nullable=False)
 
 with app.app_context():
     db.create_all()
@@ -480,6 +481,34 @@ def get_user_by_id():
     user_dict = requested_user.to_dict()
     print(user_dict)
     return jsonify({"user" : user_dict, "message": "Success", "success" : True})
+
+@app.route("/blog/post/comment/<int:post_id>",  methods=["POST"])
+def comment_post(post_id):
+    data = request.get_json()
+    
+    new_comment = Comment (
+        author_id = data.get('author_id'),
+        author_name = data.get('author_name'),
+        post_id = post_id,
+        text = data.get('text')
+    )
+
+    db.session.add(new_comment)
+    db.session.commit()
+
+    return jsonify({"message" : "Success!", "success" : True})
+
+@app.route("/blog/post/comment/<int:post_id>",  methods=["GET"])
+def get_comments(post_id):
+    result = db.session.execute(db.select(Comment))
+    comments_dict = {index: {
+        "id": curr.id,
+        "author_id" : curr.author_id,
+        "post_id": curr.post_id,
+        "text": curr.text,  
+        "author_name": curr.author_name,
+    } for index, curr in enumerate(result.scalars().all())}
+    return jsonify({"comments" : comments_dict, "message": "Success!", "success" : True})
 
 
 @app.route("/submitted-users", methods=["GET", "POST"])
